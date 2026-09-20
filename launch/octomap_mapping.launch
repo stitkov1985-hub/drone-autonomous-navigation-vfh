@@ -1,0 +1,39 @@
+<launch>
+  <arg name="resolution" default="0.5" />
+  <arg name="frame_id" default="map" />
+  <arg name="base_frame_id" default="base_link" />
+  <arg name="map_file" default="$(env HOME)/voxel_map_database.bt" />
+  <arg name="topic" default="/laser/scan" />
+
+  <!-- Статическая трансформация между роботом и лидаром -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_laser_tf" 
+        args="0.12 0 0.02 0 0 0 $(arg base_frame_id) laser_link" />
+
+  <!-- Сервер Octomap для автоматической сборки 3D вокселей -->
+  <node pkg="octomap_server" type="octomap_server_node" name="octomap_server" output="screen">
+    <param name="resolution" value="$(arg resolution)" />
+    <param name="frame_id" type="string" value="$(arg frame_id)" />
+    <param name="base_frame_id" type="string" value="$(arg base_frame_id)" />
+    <param name="sensor_model/max_range" value="30.0" />
+    <param name="sensor_model/min_range" value="0.15" />
+    
+    <!-- Ограничение по высоте вокселей под критерии Практической 7 -->
+    <param name="pointcloud_min_z" value="-0.2" />
+    <param name="pointcloud_max_z" value="2.5" />
+    
+    <param name="filter_speckles" value="true" />
+    <param name="filter_ground_plane" value="false" />
+    <param name="occupancy_thres" value="0.5" />
+    <param name="prob_hit" value="0.7" />
+    <param name="prob_miss" value="0.4" />
+    <param name="compress_map" value="true" />
+    <param name="latch" value="true" />
+    
+    <!-- Перенаправляем топик лидара на вход сервера карты -->
+    <remap from="cloud_in" to="$(arg topic)" />
+  </node>
+
+  <!-- Модуль автоматического сохранения карты в файл при закрытии -->
+  <node pkg="octomap_server" type="octomap_saver" name="octomap_saver" output="screen" 
+        args="-f $(arg map_file)" />
+</launch>

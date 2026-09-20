@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <model name="aruco_board">
+    <static>true</static>
+    <link name="link">
+      <visual name="visual">
+        <geometry>
+          <plane>
+            <normal>1 1 1</normal>
+            <size>12.0 12.0</size>
+          </plane>
+        </geometry>
+
+        <material>
+            <script>
+                <uri>model://aruco_board/textures/aruco_board.material</uri>
+                <name>aruco_board_material</name>
+            </script>
+        </material>
+
+      </visual>
+    </link>
+  </model>
+</sdf>

@@ -1,0 +1,15 @@
+material aruco_board_material
+{
+  receive_shadows true
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture board.jpg
+        filtering trilinear
+      }
+    }
+  }
+}
