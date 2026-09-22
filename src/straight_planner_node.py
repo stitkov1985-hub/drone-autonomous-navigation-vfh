@@ -29,7 +29,7 @@ class StraightPointsPlanner:
         self.param_set_client = rospy.ServiceProxy('/mavros/param/set', ParamSet)
 
         # Маршрут: полет по квадрату вокруг препятствий
-        self.waypoints = [[60.0, 0.0]]
+        self.waypoints = [[62.0, 0.0]]
         self.current_wp_idx = 0
         
         self.target_altitude = 2.0
@@ -156,10 +156,17 @@ class StraightPointsPlanner:
 
                     # Проверка достижения путевой точки с учетом радиуса уклонения VFH
                     if dist_to_wp < 0.4:
-                        self.current_wp_idx = (self.current_wp_idx + 1) % len(self.waypoints)
-                        self.sub_phase = "ROTATING"
-                        rospy.loginfo(f"=== Достигнута путевая точка! Смена индекса на: {self.current_wp_idx} ===")
+                        if self.current_wp_idx < len(self.waypoints) - 1:
+                            self.current_wp_idx += 1
+                            self.sub_phase = "ROTATING"
+                            rospy.loginfo(f"--- Достигнута путевая точка! Смена индекса на: {self.current_wp_idx} ---")
+                        else:
+                            # Точка последняя — фазу не меняем, индекс не сбрасываем, 
+                            # а просто шлем сигнал фиксации в ВФН
+                            cmd_p.header.frame_id = "stop"
+                            rospy.loginfo_throttle(5.0, "=== Финальная точка достигнута. Сигнал STOP зафиксирован ===")
 
+                        
                 elif self.sub_phase == "ROTATING":
                     # Во время вращения удерживаем текущую позицию БЛА
                     cmd_p.pose.position.x = curr_x
@@ -168,6 +175,7 @@ class StraightPointsPlanner:
                     yaw_error = angle_wrap(target_yaw - self.current_yaw)
                     
                     if abs(yaw_error) < 0.15:
+                        cmd_p.header.frame_id = "stop"
                         self.sub_phase = "FLY"
                         rospy.loginfo("Разворот на точку завершен. Летим по прямой.")
 

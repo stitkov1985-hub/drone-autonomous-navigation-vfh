@@ -23,7 +23,7 @@ class VFH2DOmniPlannerNode:
         # КАРДИНАЛЬНО УСИЛЕННЫЕ НАСТРОЙКИ ДЛЯ МОЩНОГО УХОДА В СТОРОНУ:
         self.block_distance = 2.5      # Замечаем препятствие заранее (за 2.5 метра)
         self.dist_threshold = 3.5      # ДАЕМ БОЛЬШЕ ХОДА: Выносим точку уклонения на 3.5 метра вбок!
-        self.target_altitude = 1.3     # Высота полета 1.3 метра
+        self.target_altitude = 2.0     # Высота полета 2.0 метра
 
         self.is_avoiding = False
 
@@ -106,6 +106,17 @@ class VFH2DOmniPlannerNode:
             if self.input_pose is None or self.current_pose is None:
                 self.rate.sleep()
                 continue
+            if self.input_pose.header.frame_id == "stop":
+                # Передаем жесткую целевую координату финиша вместо плывущей текущей
+                output_pose.pose.position.x = target_x
+                output_pose.pose.position.y = target_y
+                output_pose.pose.position.z = self.target_altitude
+                output_pose.pose.orientation = self.current_pose.pose.orientation
+                
+                self.final_pos_pub.publish(output_pose)
+                self.rate.sleep()
+                continue
+
 
             target_x = self.input_pose.pose.position.x
             target_y = self.input_pose.pose.position.y
